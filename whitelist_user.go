@@ -10,16 +10,11 @@ import (
 	"os"
 )
 
+// Types
+
 type MinecraftUser struct {
 	UUID     string `json:"id"`
 	Username string `json:"name"`
-}
-
-type WhitelistEntry struct {
-	UUID                string `json:"uuid"`
-	Username            string `json:"name"`
-	Level               int    `json:"level"`
-	BypassesPlayerLimit bool   `json:"bypassesPlayerLimit"`
 }
 
 func (user MinecraftUser) makeWhitelistEntry() WhitelistEntry {
@@ -31,17 +26,40 @@ func (user MinecraftUser) makeWhitelistEntry() WhitelistEntry {
 	}
 }
 
+type WhitelistEntry struct {
+	UUID                string `json:"uuid"`
+	Username            string `json:"name"`
+	Level               int    `json:"level"`
+	BypassesPlayerLimit bool   `json:"bypassesPlayerLimit"`
+}
+
+type Whitelist []WhitelistEntry
+
+func (whitelist Whitelist) write() {
+	whitelistBytes, err := json.MarshalIndent(whitelist, "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := ioutil.WriteFile("whitelist.json", whitelistBytes, 0644); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Program
+
 func main() {
 	requestedUsername := os.Args[1]
 
 	apiResponse := userAPICall(requestedUsername)
 	user := getReturnedUser(apiResponse)
-	whitelist := getWhitelist()
 
+	whitelist := readWhitelist()
 	whitelist = append(whitelist, user.makeWhitelistEntry())
-
-	writeWhitelist(whitelist)
+	whitelist.write()
 }
+
+// Methods
 
 func userAPICall(user string) []byte {
 	requestBody, err := json.Marshal([1]string{user})
@@ -74,7 +92,7 @@ func getReturnedUser(userData []byte) MinecraftUser {
 	return users[0]
 }
 
-func getWhitelist() []WhitelistEntry {
+func readWhitelist() Whitelist {
 	whitelistFile, err := os.Open("whitelist.json")
 	if err != nil {
 		log.Fatal(err)
@@ -92,15 +110,4 @@ func getWhitelist() []WhitelistEntry {
 	}
 
 	return whitelist
-}
-
-func writeWhitelist(whitelist []WhitelistEntry) {
-	whitelistBytes, err := json.MarshalIndent(whitelist, "", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := ioutil.WriteFile("whitelist.json", whitelistBytes, 0644); err != nil {
-		log.Fatal(err)
-	}
 }
