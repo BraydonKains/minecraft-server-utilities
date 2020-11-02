@@ -35,6 +35,10 @@ type WhitelistEntry struct {
 
 type Whitelist []WhitelistEntry
 
+func (whitelist *Whitelist) addUser(user MinecraftUser) {
+	*whitelist = append(*whitelist, user.makeWhitelistEntry())
+}
+
 func (whitelist Whitelist) write() {
 	whitelistBytes, err := json.MarshalIndent(whitelist, "", "")
 	if err != nil {
@@ -55,7 +59,7 @@ func main() {
 	user := getReturnedUser(apiResponse)
 
 	whitelist := readWhitelist()
-	whitelist = append(whitelist, user.makeWhitelistEntry())
+	whitelist.addUser(user)
 	whitelist.write()
 }
 
