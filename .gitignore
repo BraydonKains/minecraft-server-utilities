@@ -16,3 +16,6 @@
 
 # My stuff
 whitelist.json
+
+# Compiled binary
+mcutil
